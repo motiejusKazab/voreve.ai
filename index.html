@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Voreve.ai | AI Call Assistant</title>
+  <meta name="description" content="Voreve is an AI call assistant that answers your business calls, understands what each caller needs, and takes the next step. Built by AI Systems students at VILNIUS TECH.">
+  <meta name="theme-color" content="#0E0E0C">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="en" href="?lang=en">
+  <link rel="alternate" hreflang="lt" href="?lang=lt">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+  <a class="skip" href="#main" data-t="skip">Skip to content</a>
+
+  <!-- ============ NAV ============ -->
+  <header class="nav" id="nav" data-tone="ink">
+    <div class="wrap nav__in">
+      <a class="brand" href="#top" data-t-attr="aria-label:nav.home" aria-label="Voreve.ai, home">
+        <svg class="mark" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="3" width="3.6" height="7" rx="1.8"/><rect x="6.6" y="3" width="3.6" height="13" rx="1.8"/><rect class="mark__hot" x="12.2" y="3" width="3.6" height="22" rx="1.8"/><rect x="17.8" y="3" width="3.6" height="13" rx="1.8"/><rect x="23.4" y="3" width="3.6" height="7" rx="1.8"/></svg>
+        <span class="brand__t">voreve<i>.ai</i></span>
+      </a>
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#call" data-jump="1" data-t="nav.product">Product</a>
+        <a href="#understand" data-jump="3" data-t="nav.how">How it works</a>
+        <a href="#about" data-t="nav.about">About</a>
+        <a href="#contact" data-t="nav.contact">Contact</a>
+      </nav>
+      <div class="lang" id="lang" role="group" aria-label="Language / Kalba">
+        <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="lt" lang="lt" aria-pressed="false">LT</button>
+      </div>
+      <a class="btn btn--sm nav__cta" id="navCta" href="#demo" data-book data-t="cta.book">Book a Demo</a>
+      <button class="nav__toggle" id="navToggle" aria-expanded="false" aria-controls="mnav">
+        <span class="sr" data-t="nav.menu">Menu</span><span class="nav__bars" aria-hidden="true"><i></i><i></i></span>
+      </button>
+    </div>
+    <nav class="mnav" id="mnav" aria-label="Mobile" inert>
+      <a href="#call" data-jump="1" data-t="nav.product">Product</a>
+      <a href="#understand" data-jump="3" data-t="nav.how">How it works</a>
+      <a href="#about" data-t="nav.about">About</a>
+      <a href="#contact" data-t="nav.contact">Contact</a>
+      <a class="btn" href="#demo" data-book data-t="cta.book">Book a Demo</a>
+    </nav>
+  </header>
+
+  <!-- story rail: where we are in the call (desktop: centred; mobile: bottom bar with CTA) -->
+  <div class="rail" id="rail" aria-hidden="true">
+    <ol class="rail__steps" id="railSteps">
+      <li data-t="rail.call">Call</li><li data-t="rail.listen">Listen</li><li data-t="rail.understand">Understand</li><li data-t="rail.think">Think</li><li data-t="rail.act">Act</li><li data-t="rail.result">Result</li>
+    </ol>
+    <span class="rail__line"><i id="railFill"></i></span>
+    <span class="rail__cur" id="railCur">Call</span>
+    <a class="btn btn--sm rail__cta" href="#demo" data-book tabindex="-1" data-t="cta.book">Book a Demo</a>
+  </div>
+
+  <main id="main">
+    <!-- the one phone that travels through the whole story -->
+    <div class="stage" id="stage" aria-hidden="true"></div>
+
+    <!-- ============ SCENE 0: THE CALL COMES IN ============ -->
+    <section class="act tone-ink hero" id="top" data-act="hero">
+      <div class="wrap hero__in" id="heroIn">
+        <div class="hero__copy">
+          <p class="kicker" data-t="hero.eyebrow">AI Call Assistant</p>
+          <h1 class="hero__title">
+            <span class="ln l1"><span data-t="hero.l1">The phone rings.</span></span>
+            <span class="ln l2"><span data-t="hero.l2"><em>Voreve picks up.</em></span></span>
+          </h1>
+          <p class="lede" data-t="hero.lede">Voreve answers your business calls, understands what each caller needs, and handles the next step: booking, answering, or passing it on. No voicemail. No missed opportunity.</p>
+          <div class="cta-row" id="heroCta">
+            <a class="btn btn--lg" href="#demo" data-book><span data-t="cta.book">Book a Demo</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+            <a class="link" href="#contact" data-t="hero.touch">Get in Touch</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCENES 1 to 5: THE STORY (phone + copy, scrubbed by scroll) ============ -->
+    <div class="act tone-ink story" id="story" data-act="story">
+
+      <section class="scene" id="call" data-k="1" aria-labelledby="h-call">
+        <div class="scene__pin scene__pin--l">
+          <div class="copy">
+            <h2 class="h2" id="h-call"><span class="ln" style="--i:0"><span data-t="s1.a">Every call</span></span><span class="ln" style="--i:1"><span data-t="s1.b">starts <em>somewhere.</em></span></span></h2>
+            <p class="copy__p" data-t="s1.p">A customer rings, and most businesses can’t always pick up. Voreve answers instantly: no hold music, no voicemail box.</p>
+            <p class="copy__n" data-t="s1.n">Ringing → Connected</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" id="listen" data-k="2" aria-labelledby="h-listen">
+        <div class="scene__pin scene__pin--l">
+          <div class="copy">
+            <h2 class="h2" id="h-listen"><span class="ln" style="--i:0"><span data-t="s2.a">Voreve</span></span><span class="ln" style="--i:1"><span data-t="s2.b"><em>listens.</em></span></span></h2>
+            <p class="copy__p" data-t="s2.p">Speech becomes text while the caller is still talking, so nothing they say is lost. The waveform is the live signal Voreve is working from.</p>
+            <p class="copy__n" data-t="s2.n">Live transcription</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" id="understand" data-k="3" aria-labelledby="h-understand">
+        <div class="scene__pin scene__pin--r">
+          <div class="copy">
+            <h2 class="h2" id="h-understand"><span class="ln" style="--i:0"><span data-t="s3.a">Not just</span></span><span class="ln" style="--i:1"><span data-t="s3.b"><em>speech-to-text.</em></span></span></h2>
+            <p class="copy__p" data-t="s3.p">A transcript only records words. Voreve works out the intent behind them: what the caller wants, what it already knows, and what it still needs to ask. That is the difference between a transcript and an agent.</p>
+            <p class="copy__n" data-t="s3.n">Intent → missing details → next step</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" id="act" data-k="4" aria-labelledby="h-act">
+        <div class="scene__pin scene__pin--r">
+          <div class="copy">
+            <h2 class="h2" id="h-act"><span class="ln" style="--i:0"><span data-t="s4.a">Voreve doesn’t</span></span><span class="ln" style="--i:1"><span data-t="s4.b">just <em>answer.</em></span></span></h2>
+            <p class="copy__p" data-t="s4.p">Once it knows what’s needed, Voreve moves the conversation forward and handles the next step. Booking an appointment is shown here as an example.</p>
+            <p class="copy__n" data-t="s4.n">Example call. What Voreve does for your business depends on how it’s set up.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene scene--result" id="result" data-k="5" aria-labelledby="h-result">
+        <div class="scene__pin scene__pin--c">
+          <h2 class="giant" id="h-result">
+            <span class="giant__a"><span class="ln" style="--i:0"><span data-t="s5.a">One call</span></span></span>
+            <span class="giant__b"><span class="ln" style="--i:1"><span data-t="s5.b"><em>handled.</em></span></span></span>
+          </h2>
+          <div class="copy copy--foot">
+            <p class="copy__p" data-t="s5.p">Without interrupting your team.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ WHY + WHAT A CALL CAN LEAD TO (phone rests on the left) ============ -->
+    <section class="act tone-ink value" id="value" data-act="value">
+      <div class="wrap value__grid">
+        <div class="value__phone" aria-hidden="true"></div>
+        <div class="value__body">
+          <div class="value__head">
+            <p class="kicker" data-t="v.kicker">That was one call</p>
+            <h2 class="h2 rv"><span class="ln"><span data-t="v.a">Now picture</span></span><span class="ln"><span data-t="v.b"><em>every</em> one.</span></span></h2>
+            <p class="value__p" data-t="v.p">The calls you can’t take are still your calls. Voreve makes sure someone always picks up.</p>
+          </div>
+
+          <!-- interactive: a day of incoming calls; drag the hour -->
+          <div class="day" id="day">
+            <div class="day__head"><h3 data-t="day.title">A day with Voreve</h3><output class="day__hour" id="dayHour" for="dayRange">14:00</output></div>
+            <div class="day__chart" id="dayChart">
+              <div class="day__calls" id="dayCalls" aria-hidden="true"></div>
+              <div class="day__bars" aria-hidden="true">
+                <div class="day__row day__row--v"></div>
+                <div class="day__row day__row--t"></div>
+                <i class="day__cursor" id="dayCursor"></i>
+              </div>
+              <label class="sr" for="dayRange" data-t="day.hour">Hour</label>
+              <input class="day__range" id="dayRange" type="range" min="0" max="23" step="1" value="14" aria-describedby="dayMsg" data-t-attr="aria-label:day.aria">
+            </div>
+            <div class="day__axis" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+            <p class="day__msg" id="dayMsg" aria-live="polite"></p>
+            <ul class="day__legend" aria-hidden="true"><li class="lg lg--v" data-t="day.legend.v">Voreve</li><li class="lg lg--t" data-t="day.legend.t">Your team</li></ul>
+            <p class="fine" data-t="day.fine">Illustration of incoming calls across a typical 9–17 working day.</p>
+          </div>
+
+          <ol class="vlist" id="vlist">
+            <li class="vrow"><span class="vrow__n">01</span><div><h3 data-t="r1.h">Don’t miss the call that matters</h3><p data-t="r1.p">A caller who reaches voicemail may simply ring the next business. Voreve makes sure someone always answers.</p></div></li>
+            <li class="vrow"><span class="vrow__n">02</span><div><h3 data-t="r2.h">Respond instantly</h3><p data-t="r2.p">No queue and no “please hold.” The conversation starts as soon as the line connects.</p></div></li>
+            <li class="vrow"><span class="vrow__n">03</span><div><h3 data-t="r3.h">Hand off the repetitive</h3><p data-t="r3.p">Opening hours, directions, booking a slot. The same questions, handled the same good way every time.</p></div></li>
+            <li class="vrow"><span class="vrow__n">04</span><div><h3 data-t="r4.h">Stay available after hours</h3><p data-t="r4.p">Evenings, weekends, lunch breaks. Your phone is covered when your team isn’t.</p></div></li>
+            <li class="vrow"><span class="vrow__n">05</span><div><h3 data-t="r5.h">Cut routine phone work</h3><p data-t="r5.p">Your people spend their day on the calls that need a person, not the ones that need an answer.</p></div></li>
+            <li class="vrow"><span class="vrow__n">06</span><div><h3 data-t="r6.h">One consistent caller experience</h3><p data-t="r6.p">Same tone, same process, same accuracy, from the first call of the day to the last.</p></div></li>
+          </ol>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ABOUT: two founders, one line ============ -->
+    <section class="act tone-ink about" id="about" data-act="about">
+      <div class="wrap">
+        <p class="kicker" data-t="a.kicker">Behind the voice</p>
+        <p class="about__lead" id="lead" data-t="a.lead">We’re Simona and Motiejus, AI Systems students at VILNIUS TECH. Too many business calls still end in voicemail, hold music, or a missed opportunity. We think intelligent voice can do better.</p>
+
+        <p class="about__p" data-t="a.p">We’re early, and we’d rather show you a working demo than a promise.</p>
+        <div class="about__phone" id="aboutPhone" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- ============ FINAL CTA: answer your own call, the phone answers with you ============ -->
+    <section class="act tone-ink demo" id="demo" data-act="demo" aria-labelledby="demoH">
+      <div class="wrap demo__grid">
+        <p class="ringlabel"><i class="pulse"></i><span id="ringLabel" data-t="c.ring">Incoming call · you</span></p>
+        <h2 class="cta__h rv" id="demoH">
+          <span class="ln"><span data-t="c.a">See what Voreve</span></span>
+          <span class="ln"><span data-t="c.b">could do for <em>your</em></span></span>
+          <span class="ln"><span data-t="c.c">business.</span></span>
+        </h2>
+        <p class="demo__p" data-t="c.p">Book a demo with the founders. Bring a real scenario (appointments, enquiries, after-hours calls) and we’ll show you how Voreve would handle it.</p>
+
+        <div class="demo__phone" id="demoPhone" aria-hidden="true"><span class="demo__rings"><i></i><i></i><i></i></span></div>
+
+        <div class="cta-actions">
+          <div class="answer" id="answer">
+            <span class="answer__rings" aria-hidden="true"><i></i><i></i></span>
+            <button class="answer__btn" id="bookBtn" type="button" aria-expanded="false" aria-controls="bookPanel">
+              <span class="answer__thumb" id="thumb" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.6 3.6a1 1 0 0 1-.25 1z"/></svg></span>
+              <span class="answer__lab" data-t="cta.book">Book a Demo</span>
+              <svg class="answer__arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+            </button>
+          </div>
+          <a class="link" href="#contact" data-t="hero.touch">Get in Touch</a>
+        </div>
+        <p class="answer__hint" data-t="c.hint">Slide the handset to answer, or just press the button.</p>
+
+        <div class="panel" id="bookPanel" inert>
+          <div class="panel__in">
+            <div class="panel__card">
+              <div id="bookingEmbed" hidden>
+                <iframe id="bookingFrame" title="Book a demo with Voreve" data-t-attr="title:f.frame" loading="lazy"></iframe>
+                <a class="link" id="bookingOpen" target="_blank" rel="noopener" data-t="f.open">Open the calendar in a new tab ↗</a>
+              </div>
+              <form class="form" id="demoForm" novalidate>
+                <h3 class="form__h" data-t="f.title">Request a demo</h3>
+                <div class="form__grid">
+                  <div class="field">
+                    <label for="f-name" data-t="f.name">Your name</label>
+                    <input id="f-name" name="name" type="text" autocomplete="name" required>
+                    <p class="field__err" id="e-name" hidden data-t="f.e.name">Please tell us your name.</p>
+                  </div>
+                  <div class="field">
+                    <label for="f-email" data-t="f.email">Work email</label>
+                    <input id="f-email" name="email" type="email" autocomplete="email" inputmode="email" required>
+                    <p class="field__err" id="e-email" hidden data-t="f.e.email">Enter a valid email so we can reply.</p>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="f-msg"><span data-t="f.msg">What should Voreve handle?</span> <span class="opt" data-t="f.opt">(optional)</span></label>
+                  <textarea id="f-msg" name="message" rows="3"></textarea>
+                </div>
+                <button class="btn btn--inv" type="submit"><span data-t="f.submit">Request a demo</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+                <p class="form__status" id="formStatus" role="status" tabindex="-1"></p>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact" id="contact">
+          <p class="contact__l" data-t="c.mail.l">Prefer email?</p>
+          <a class="contact__mail" data-email-link href="#contact" aria-disabled="true" data-t="c.mail.none">Email address coming soon</a>
+          <button class="contact__copy" type="button" data-email-copy hidden data-t="c.copy">Copy address</button>
+          <p class="sr" role="status" data-copy-status></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="foot">
+    <div class="wrap foot__grid">
+      <div>
+        <a class="brand brand--foot" href="#top" data-t-attr="aria-label:nav.home" aria-label="Voreve.ai, home">
+          <svg class="mark" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="3" width="3.6" height="7" rx="1.8"/><rect x="6.6" y="3" width="3.6" height="13" rx="1.8"/><rect class="mark__hot" x="12.2" y="3" width="3.6" height="22" rx="1.8"/><rect x="17.8" y="3" width="3.6" height="13" rx="1.8"/><rect x="23.4" y="3" width="3.6" height="7" rx="1.8"/></svg>
+          <span class="brand__t">voreve<i>.ai</i></span>
+        </a>
+        <p class="foot__p" data-t="foot.desc">An AI call assistant that answers, understands, and acts, so no important call goes unanswered.</p>
+      </div>
+      <nav aria-label="Footer">
+        <p class="foot__h" data-t="foot.site">Site</p>
+        <a href="#call" data-jump="1" data-t="nav.product">Product</a><a href="#understand" data-jump="3" data-t="nav.how">How it works</a><a href="#about" data-t="nav.about">About</a><a href="#demo" data-book data-t="cta.book">Book a Demo</a>
+      </nav>
+      <div>
+        <p class="foot__h" data-t="foot.contact">Contact</p>
+        <a data-email-link href="#contact" aria-disabled="true" data-t="c.mail.none">Email address coming soon</a>
+        <p class="foot__p foot__p--sm" data-t="foot.built">Built by Simona &amp; Motiejus, AI Systems students at VILNIUS TECH.</p>
+      </div>
+    </div>
+    <div class="wrap foot__base"><span>© 2026 Voreve.ai</span><span data-t="foot.early">An early-stage startup.</span></div>
+  </footer>
+
+  <!-- ============ THE PHONE (cloned once for the stage, or once per scene when motion is reduced) ============ -->
+  <template id="phoneTpl">
+    <div class="phone">
+      <div class="phone__in">
+        <i class="hw hw--l1"></i><i class="hw hw--l2"></i><i class="hw hw--l3"></i><i class="hw hw--r"></i>
+        <div class="face">
+          <div class="screen">
+            <div class="u-port">
+            <div class="u-bg"></div>
+
+            <div class="u-head">
+              <span class="u-brand">voreve<i>.ai</i></span>
+              <span class="u-time">00:00</span>
+            </div>
+            <div class="u-state"><div class="u-reel"><span data-t="s.0">Incoming call</span><span data-t="s.1">Connected</span><span data-t="s.2">Listening</span><span data-t="s.3">Understanding</span><span data-t="s.4">Taking action</span><span data-t="s.5">Call complete</span></div></div>
+
+            <!-- identity: incoming call becomes the header -->
+            <div class="u-av">
+              <span class="u-rings"><b></b><b></b><b></b></span>
+              <span class="u-av__c"><svg viewBox="0 0 28 28"><rect x="1" y="3" width="3.6" height="7" rx="1.8"/><rect x="6.6" y="3" width="3.6" height="13" rx="1.8"/><rect x="12.2" y="3" width="3.6" height="22" rx="1.8"/><rect x="17.8" y="3" width="3.6" height="13" rx="1.8"/><rect x="23.4" y="3" width="3.6" height="7" rx="1.8"/></svg></span>
+            </div>
+            <div class="u-who">
+              <p class="u-lab" data-t="ph.unknown">Unknown caller</p>
+              <p class="u-num">+370 XXX XXXX</p>
+              <div class="u-status"><div><span data-t="ph.ringing">Ringing…</span><span data-t="ph.connected">Connected</span></div></div>
+            </div>
+            <div class="u-slide"><span class="u-slide__t" data-t="ph.slide">Voreve answers</span><i class="u-thumb"><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i></div>
+
+            <!-- listen -->
+            <div class="u-wave"><canvas width="640" height="300"></canvas></div>
+            <div class="u-tx">
+              <p class="u-lab" data-t="ph.tx">Caller · live transcript</p>
+              <p class="u-q" data-t="ph.q">“Hi, I’d like to <mark>book an appointment</mark> for <mark>Thursday</mark>.”</p>
+            </div>
+
+            <!-- understand + think -->
+            <div class="u-intent">
+              <p class="u-lab" data-t="ph.intent">Intent detected</p>
+              <p class="u-big" data-t="ph.appt">Appointment booking</p>
+              <ul class="u-slots">
+                <li style="--a:.45;--b:.65"><i></i><span data-t="ph.k.intent">Intent</span><b data-t="ph.v.intent">Book appointment</b></li>
+                <li style="--a:.58;--b:.78"><i></i><span data-t="ph.k.day">Day</span><b data-t="ph.v.day">Thursday</b></li>
+                <li class="need" style="--a:.7;--b:.9"><i></i><span data-t="ph.k.time">Time</span><b data-t="ph.v.time">Still needed</b></li>
+              </ul>
+              <p class="u-next"><i></i><span data-t="ph.next">Next: check availability</span></p>
+            </div>
+
+            <!-- act -->
+            <div class="u-act">
+              <div class="u-step" style="--a:.2;--b:.32;--c:.5"><span class="u-spin"></span><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span data-t="ph.check">Checking availability…</span></div>
+              <div class="u-slotcard" style="--a:.48;--b:.66"><p class="u-lab" data-t="ph.thu">Thursday</p><p class="u-big">14:30</p><em data-t="ph.avail">Available</em></div>
+              <div class="u-ok" style="--a:.74;--b:.96"><span class="u-ok__c"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><p data-t="ph.conf">Appointment confirmed</p></div>
+            </div>
+
+            <!-- result -->
+            <div class="u-res">
+              <span class="u-stamp"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+              <p class="u-big" data-t="ph.complete">Call complete</p>
+              <dl class="u-kv">
+                <div><dt data-t="ph.dur">Duration</dt><dd data-dur>02:18</dd></div>
+                <div><dt data-t="ph.res">Result</dt><dd data-t="ph.resolved">Resolved</dd></div>
+              </dl>
+              <p class="u-sum" data-t="ph.booked">Booked · Thursday 14:30</p>
+            </div>
+            <p class="u-ex" data-t="ph.example">Example call · illustrative</p>
+            </div>
+
+            <!-- landscape: the founders (drawn rotated so they stay upright while the phone turns) -->
+            <div class="u-found">
+              <div class="uf__top"><span class="uf__brand">voreve<i>.ai</i></span><span class="uf__lab" data-t="a.kicker">Behind the voice</span></div>
+              <div class="uf__row">
+                <div class="uf__p" data-side="0"><span class="uf__n"><span class="o">Simona</span><span class="f">Simona</span></span><span class="uf__r" data-t="a.role">AI Systems · VILNIUS TECH</span></div>
+                <div class="uf__line"><canvas width="600" height="260"></canvas></div>
+                <div class="uf__p uf__p--r" data-side="1"><span class="uf__n"><span class="o">Motiejus</span><span class="f">Motiejus</span></span><span class="uf__r" data-t="a.role">AI Systems · VILNIUS TECH</span></div>
+              </div>
+              <p class="uf__tag" data-t="a.duo">Two founders, one line</p>
+            </div>
+          </div>
+          <i class="island"></i>
+          <div class="glass"></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script src="config.js"></script>
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -31,3 +31,19 @@ Languages: **English and Lithuanian** (switch in the nav; remembered in the brow
 - `BOOKING_URL`: calendar link, embedded in the final CTA panel.
 - `CONTACT_EMAIL`: enables email links, the copy button, and the form's mailto fallback.
 - `FORM_ENDPOINT`: optional form backend; the demo form POSTs JSON here (includes the visitor's language).
+
+## Performance notes
+- No `backdrop-filter` on phones (it re-blurs everything behind the nav and bottom bar every frame).
+- The phone's glass reflection moves with a `transform`, and all pulses use `transform`/`opacity` (nothing repaints per frame).
+- The phone's own animations (rings, spinner, pulse) run only while their screen state is visible.
+- Phones get a lighter body (4 slabs, no glow layer) and no constant float.
+- **Docking:** when the phone reaches the contact section it is moved *into* the page (`#demoPhone`), so the compositor
+  scrolls it with the content. A fixed element positioned by JavaScript cannot stay in step with a touch scroll.
+- Resizes caused only by the mobile address bar (height change under 160px) are ignored.
+- The phone screen is cheap to animate: its moving parts are their own compositor layers, each animation variable is
+  written only to the layers that use it, states that are not visible are `display: none`, and the rounded screen corners
+  are painted on top (a rectangular clip is far cheaper than a rounded mask over animating layers).
+- No `backdrop-filter` anywhere; sections paint their own background (no negative-z pseudo-elements, no isolated stacking context).
+- **Lite mode** (`html.lite`): switches on automatically if the page measures itself below ~38fps while scrolling, or on
+  touch devices reporting 4 or fewer cores / 3GB or less memory. It drops extra phone body layers, the glass, the pulse
+  animations, and refreshes the phone screen every third frame.

@@ -16,6 +16,7 @@
   const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* storage blocked: fine */ } } };
 
   /* the pinned story needs a real viewport; landscape phones and reduced-motion users get the static layout */
+  const coarse = matchMedia('(pointer: coarse)').matches;
   const reducedMq = matchMedia('(prefers-reduced-motion: reduce)');
   const compact = innerHeight < 500;
   const motion = !reducedMq.matches && !compact;
@@ -76,7 +77,10 @@
       p.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') setSpeaker(k, true, performance.now()); });
       p.addEventListener('click', () => setSpeaker(k, true, performance.now()));
     });
-    return { el, screen: $('.screen', el), glass: $('.glass', el), canvas: $('.u-wave canvas', el), found: $('.u-found', el), foundCv: $('.uf__line canvas', el), time: $('.u-time', el), v: {}, secs: -1 };
+    // each animation variable is written only to the layers that use it, so a change restyles a few elements, not the whole screen
+    const T = (sel) => $$(sel, el);
+    const targets = { p1: T('.u-bg, .u-time, .u-rings, .u-status, .u-slide'), p2: T('.u-brand, .u-av, .u-who, .u-slide, .u-wave, .u-tx'), p3: T('.u-wave, .u-tx, .u-intent'), p4: T('.u-wave, .u-tx, .u-intent, .u-act'), p5: T('.u-act, .u-res'), ty: T('.u-q'), hs: T('.u-reel'), land: T('.u-port, .u-found') };
+    return { el, targets, screen: $('.screen', el), glassI: $('.glass i', el), f: {}, canvas: $('.u-wave canvas', el), found: $('.u-found', el), foundCv: $('.uf__line canvas', el), time: $('.u-time', el), v: {}, secs: -1 };
   };
 
   /* the call, as a function of story position x (0 = hero ... 5 = result) */
@@ -90,11 +94,17 @@
     return { p1, p2, ty, p3, p4, p5, hs: p1 + p2 + p3 + clamp(p4 * 5) + p5, secs: 138 * clamp((x - 0.8) / 4.1) };
   };
   const applyScreen = (ph, tl) => {
-    const st = ph.screen.style;
     for (const k of ['p1', 'p2', 'p3', 'p4', 'p5', 'ty', 'hs', 'land']) {
       const val = tl[k] || 0;
-      if (ph.v[k] === undefined || Math.abs(ph.v[k] - val) > 0.0015) { ph.v[k] = val; st.setProperty('--' + k, val.toFixed(3)); }
+      if (ph.v[k] === undefined || Math.abs(ph.v[k] - val) > 0.003) { ph.v[k] = val; const str = val.toFixed(3), tg = ph.targets[k]; for (let n = 0; n < tg.length; n++) tg[n].style.setProperty('--' + k, str); }
     }
+    const flag = (c, on) => { if (ph.f[c] !== on) { ph.f[c] = on; ph.screen.classList.toggle(c, on); } };
+    flag('is-ringing', tl.p1 < 0.62); flag('is-spin', tl.p4 > 0.1 && tl.p4 < 0.6); flag('is-need', tl.p3 > 0.6 && tl.p4 < 0.4);
+    // layers switch on only while they can be seen (they are already fully transparent just outside these ranges)
+    const { p2, p3, p4, p5 } = tl, ld = tl.land || 0;
+    flag('s-ent', p2 < 0.55 && ld < 0.46); flag('s-wave', p2 > 0.04 && p4 < 0.66 && ld < 0.46); flag('s-tx', p2 > 0.55 && p4 < 0.5 && ld < 0.46);
+    flag('s-int', p3 > 0.18 && p4 < 0.6 && ld < 0.46); flag('s-act', p4 > 0.1 && p5 < 0.5 && ld < 0.46); flag('s-res', p5 > 0.25 && ld < 0.46);
+    flag('s-found', ld > 0.4); flag('s-hideport', ld > 0.47);
     const s = Math.floor(tl.secs);
     if (s !== ph.secs) { ph.secs = s; ph.time.textContent = fmt(s); }
   };
@@ -201,6 +211,7 @@
     if (stage) stage.style.setProperty('--k', G.k.toFixed(4));
     if (stage) stage.classList.toggle('is-m', m);
     setAnswerTravel();
+    if (docked) dockPose();
   };
 
   /* story position: 0 at the hero, k when scene k is centred, continuing through the later anchors */
@@ -279,9 +290,32 @@
     c.globalAlpha = 1;
   };
 
+  /* ================= docking (phones): once the phone reaches the contact section it moves INTO the page, so the
+     compositor scrolls it with the content. A fixed phone positioned by JavaScript can't stay in step with a touch scroll. ================= */
+  let docked = false;
+  const dockPose = () => {
+    const r = demoPhoneEl.getBoundingClientRect();
+    const sc = clamp(r.height / (782 * G.k), 0.3, 1.1);
+    phone.el.style.setProperty('--k', G.k.toFixed(4));
+    phone.el.style.transform = `rotateX(4deg) rotateY(-8deg) rotateZ(0deg) scale(${sc.toFixed(3)})`; // same pose as the live target on phones
+    demoPhoneEl.style.perspective = '2000px';
+    demoPhoneEl.style.perspectiveOrigin = `${(G.vw / 2 - r.left).toFixed(0)}px ${(G.vh * 0.46 - r.top).toFixed(0)}px`; // same vanishing point as the stage, so there is no visual jump
+  };
+  const setDock = (on) => {
+    docked = on;
+    if (on) { dockPose(); demoPhoneEl.appendChild(phone.el); }
+    else { stage.appendChild(phone.el); phone.el.style.removeProperty('--k'); demoPhoneEl.style.perspective = ''; demoPhoneEl.style.perspectiveOrigin = ''; hidden = null; lastT = ''; lastGx = null; }
+  };
+
   /* ================= main loop ================= */
   const pose = [0, 0, 1, 0, 0, 0];
   let ss = -1, lastSy = -1, lastT = '', lastGx = '', hidden = null, last = 0, needMeasure = true, E = 0, lastTy = 0, running = false;
+  /* lite mode: if the device cannot keep up while scrolling (or looks low-end), the page lightens itself */
+  let lite = false, scrollEma = 16.7, scrollN = 0, lastScrollSeen = -1;
+  const lowEnd = coarse && ((navigator.deviceMemory && navigator.deviceMemory <= 3) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4));
+  const enterLite = () => { lite = true; root.classList.add('lite'); };
+  if (lowEnd && motion) enterLite();
+  let slowEma = 16.7, stride = 1, frameNo = 0;
   let ctaX = 0, ctaOpenAt = 0, ctaWasOpen = false, dragPP = 0, liveOn = false;
   let sceneV = [], navState = {}, lead = -1, vAct = -1, railIdx = -1, railOn = null, railW = -1, curLabel = '', ptX = 0, ptY = 0, ptTX = 0, ptTY = 0;
   const setCls = (el, c, on, key) => { if (navState[key] !== on) { navState[key] = on; el.classList.toggle(c, on); } };
@@ -290,45 +324,56 @@
   const frame = (now) => {
     if (!running) return;
     const dt = Math.min(64, now - (last || now)); last = now;
+    frameNo++; slowEma += (Math.min(dt, 80) - slowEma) * 0.06; stride = lite ? 3 : slowEma > 21 ? 2 : 1; // slow device: refresh the phone screen less often (its motion and the scroll stay full rate)
     if (needMeasure) { needMeasure = false; measure(); }
     const sy = scrollY, vh = G.vh, vw = G.vw;
+    if (sy !== lastScrollSeen) { lastScrollSeen = sy; scrollN++; scrollEma += (Math.min(dt, 100) - scrollEma) * 0.08; if (!lite && scrollN > 45 && scrollEma > 26) enterLite(); }
     if (ss < 0) ss = sy;
-    ss += (sy - ss) * (1 - Math.exp(-dt / 105)); if (Math.abs(sy - ss) < 0.3) ss = sy;
+    ss += (sy - ss) * (1 - Math.exp(-dt / (coarse ? 55 : 105))); if (Math.abs(sy - ss) < 0.3) ss = sy;
     const x = posX(ss), m = isMobile();
 
     /* --- the phone --- */
     const inCta = x >= 8;
-    if (!m && x >= 4.9 && x < 8.1) { // the value column: the phone fills it and stays centred in it
-      const r = valuePhoneEl.getBoundingClientRect();
-      dynValue[0] = (r.left + r.width / 2 - vw / 2) / vw; dynValue[1] = (r.top + r.height / 2 - vh / 2) / vh;
-      dynValue[2] = clamp(r.height / (782 * G.k), 0.3, 1);
-    }
-    if (x >= 6.6) { // live targets (rect reads happen before any writes): the landscape founders slot, then the contact slot
-      const r = aboutPhoneEl.getBoundingClientRect();
-      dynAbout[0] = (r.left + r.width / 2 - vw / 2) / vw; dynAbout[1] = (r.top + r.height / 2 - vh / 2) / vh;
-      dynAbout[2] = clamp((r.width / (782 * G.k)) * 0.98, 0.3, 1); dynAbout[3] = 3; dynAbout[4] = m ? -4 : -8; dynAbout[5] = -90;
-    }
-    if (x >= 7.9) {
-      const r = demoPhoneEl.getBoundingClientRect();
-      dynCta[0] = (r.left + r.width / 2 - vw / 2) / vw; dynCta[1] = (r.top + r.height / 2 - vh / 2) / vh;
-      dynCta[2] = clamp(r.height / (782 * G.k), 0.3, 1.1);
-      dynCta[3] = m ? 4 : 5; dynCta[4] = m ? -8 : -15; dynCta[5] = m ? 0 : 1.5;
-    }
-    poseAt(x, pose);
+    const wantDock = m && x >= 8.9;                 // phones: once it has arrived, the page itself carries the phone
+    if (wantDock !== docked) setDock(wantDock);
     const ctaOpen = panel.classList.contains('is-open');
-    const tsec = now / 1000, idle = Math.max(clamp(1 - x / 0.55), inCta && !ctaOpen ? clamp((x - 8.4) / 0.6) : 0);
-    const px = pose[0] * vw, py = pose[1] * vh + Math.sin(tsec * 0.9) * 5 * idle;
-    const half = 391 * G.k * pose[2] + 24;
-    const gone = Math.abs(py) > vh / 2 + half || Math.abs(px) > vw / 2 + 391 * G.k * pose[2] + 60; // fully off-screen: skip all work
-    if (gone !== hidden) { hidden = gone; stage.classList.toggle('is-hidden', gone); }
-    if (!gone) {
-      const buzz = idle > 0.3 && tsec % 3.4 < 0.32 ? Math.sin(tsec * 64) * 0.55 * (1 - (tsec % 3.4) / 0.32) : 0;
-      const lean = clamp((sy - ss) * 0.012, -4, 4);
-      ptX = lerp(ptX, ptTX, 1 - Math.exp(-dt / 160)); ptY = lerp(ptY, ptTY, 1 - Math.exp(-dt / 160));
-      const ry = pose[4] + Math.sin(tsec * 0.45) * 1.5 * idle + ptX * 3.2, rx = pose[3] + Math.sin(tsec * 0.6) * 0.6 * idle + lean - ptY * 2.4, rz = pose[5] + buzz;
-      const tf = `translate3d(${px.toFixed(1)}px,${py.toFixed(1)}px,0) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) scale(${pose[2].toFixed(3)})`;
-      if (tf !== lastT) { lastT = tf; phone.el.style.transform = tf; }
-      const gx = (50 + ry * 1.3).toFixed(1) + '% 0'; if (gx !== lastGx) { lastGx = gx; phone.glass.style.backgroundPosition = gx; }
+    let land = 0;
+    if (!docked) {
+      if (!m && x >= 4.9 && x < 8.1) { // the value column: the phone fills it and stays centred in it
+        const r = valuePhoneEl.getBoundingClientRect();
+        dynValue[0] = (r.left + r.width / 2 - vw / 2) / vw; dynValue[1] = (r.top + r.height / 2 - vh / 2) / vh;
+        dynValue[2] = clamp(r.height / (782 * G.k), 0.3, 1);
+      }
+      if (x >= 6.6) { // live targets (rect reads happen before any writes): the landscape founders slot, then the contact slot
+        const r = aboutPhoneEl.getBoundingClientRect();
+        dynAbout[0] = (r.left + r.width / 2 - vw / 2) / vw; dynAbout[1] = (r.top + r.height / 2 - vh / 2) / vh;
+        dynAbout[2] = clamp((r.width / (782 * G.k)) * 0.98, 0.3, 1); dynAbout[3] = 3; dynAbout[4] = m ? -4 : -8; dynAbout[5] = -90;
+      }
+      if (x >= 7.9) {
+        const r = demoPhoneEl.getBoundingClientRect();
+        dynCta[0] = (r.left + r.width / 2 - vw / 2) / vw; dynCta[1] = (r.top + r.height / 2 - vh / 2) / vh;
+        dynCta[2] = clamp(r.height / (782 * G.k), 0.3, 1.1);
+        dynCta[3] = m ? 4 : 5; dynCta[4] = m ? -8 : -15; dynCta[5] = m ? 0 : 1.5;
+      }
+      poseAt(x, pose);
+      const tsec = now / 1000, idle = Math.max(clamp(1 - x / 0.55), inCta && !ctaOpen ? clamp((x - 8.4) / 0.6) : 0);
+      const fl = m ? 0 : idle; // touch screens: no constant float (it would re-layout the phone every frame)
+      const px = pose[0] * vw, py = pose[1] * vh + Math.sin(tsec * 0.9) * 5 * fl;
+      const half = 391 * G.k * pose[2] + 24;
+      const gone = Math.abs(py) > vh / 2 + half || Math.abs(px) > vw / 2 + 391 * G.k * pose[2] + 60; // fully off-screen: skip all work
+      if (gone !== hidden) { hidden = gone; stage.classList.toggle('is-hidden', gone); }
+      if (!gone) {
+        const buzz = idle > 0.3 && tsec % 3.4 < 0.32 ? Math.sin(tsec * 64) * 0.55 * (1 - (tsec % 3.4) / 0.32) : 0;
+        const lean = clamp((sy - ss) * 0.012, -4, 4);
+        ptX = lerp(ptX, ptTX, 1 - Math.exp(-dt / 160)); ptY = lerp(ptY, ptTY, 1 - Math.exp(-dt / 160));
+        const ry = pose[4] + Math.sin(tsec * 0.45) * 1.5 * fl + ptX * 3.2, rx = pose[3] + Math.sin(tsec * 0.6) * 0.6 * fl + lean - ptY * 2.4, rz = pose[5] + buzz;
+        const tf = `translate3d(${px.toFixed(1)}px,${py.toFixed(1)}px,0) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) scale(${pose[2].toFixed(3)})`;
+        if (tf !== lastT) { lastT = tf; phone.el.style.transform = tf; }
+        const gx = Math.round(ry * 8) / 10; if (gx !== lastGx) { lastGx = gx; phone.glassI.style.transform = `translate3d(${gx}%,0,0)`; }
+      }
+      land = clamp(-pose[5] / 90);
+    }
+    if ((docked || !hidden) && (stride === 1 || frameNo % stride === 0)) {
       let tl;
       if (inCta) { // beside the contact section the phone answers with the visitor
         if (ctaOpen && !ctaWasOpen) ctaOpenAt = now;
@@ -337,7 +382,7 @@
         ctaX = ctaOpen ? Math.max(ctaX, target) : lerp(ctaX, target, 1 - Math.exp(-dt / 180));
         tl = timeline(ctaX); tl.secs = ctaOpen ? (now - ctaOpenAt) / 1000 : 0;
       } else tl = timeline(x);
-      const land = clamp(-pose[5] / 90); tl.land = land;
+      tl.land = land;
       applyScreen(phone, tl);
       const live = land > 0.92; if (live !== liveOn) { liveOn = live; phone.found.classList.toggle('is-live', live); }
       if (land > 0.3) drawFound(phone, now, dt, clamp((land - 0.5) * 2));
@@ -411,7 +456,7 @@
   /* ================= build ================= */
   if (motion) {
     stage = $('#stage');
-    phone = buildPhone(isMobile() ? 7 : 12);
+    phone = buildPhone(isMobile() ? 4 : 8);
     stage.appendChild(phone.el);
     matchMedia('(max-width: 899px)').addEventListener('change', () => { needMeasure = true; });
     measure();
@@ -430,12 +475,12 @@
       const ph = buildPhone(9), wrap = document.createElement('div');
       wrap.className = 'sphone'; wrap.style.setProperty('--sry', SRY[k] + 'deg'); wrap.setAttribute('aria-hidden', 'true');
       wrap.appendChild(ph.el); hostFor(k).appendChild(wrap);
-      applyScreen(ph, timeline(x)); ph.glass.style.backgroundPosition = '58% 0';
+      applyScreen(ph, timeline(x)); ph.glassI.style.transform = 'translate3d(6%,0,0)';
       if (k >= 2 && k <= 3) staticPhoneWave(ph.canvas);
     });
     { const ph = buildPhone(9), wrap = document.createElement('div');
       wrap.className = 'sphone sphone--land'; wrap.setAttribute('aria-hidden', 'true'); wrap.appendChild(ph.el); aboutPhoneEl.appendChild(wrap);
-      applyScreen(ph, Object.assign(timeline(5), { land: 1 })); ph.glass.style.backgroundPosition = '58% 0'; speakerPos = 0.3; drawFound(ph, 0, 0, 0.9); }
+      applyScreen(ph, Object.assign(timeline(5), { land: 1 })); ph.glassI.style.transform = 'translate3d(6%,0,0)'; speakerPos = 0.3; drawFound(ph, 0, 0, 0.9); }
     hero.classList.add('is-in');
     /* no animation loop here, so the nav still needs its scroll-aware tone and CTA */
     nav.classList.add('show-cta');
@@ -564,8 +609,12 @@
   $$('input, textarea', form).forEach((el) => el.addEventListener('input', () => { if (el.getAttribute('aria-invalid') === 'true') { el.setAttribute('aria-invalid', 'false'); const er = $('#e-' + el.name); if (er) er.hidden = true; } }));
 
   /* ================= resize / fonts ================= */
-  const remeasure = (() => { let id; return () => { clearTimeout(id); id = setTimeout(() => { needMeasure = true; if (!motion) measure(); }, 140); }; })();
-  addEventListener('resize', remeasure);
+  let lastW = innerWidth, lastH = innerHeight;
+  const remeasure = (() => { let id; return (force) => { clearTimeout(id); id = setTimeout(() => { needMeasure = true; if (!motion) measure(); }, 140); }; })();
+  addEventListener('resize', () => { // the mobile address bar growing/shrinking changes only the height: not worth a full re-measure mid-scroll
+    if (innerWidth === lastW && Math.abs(innerHeight - lastH) < 160) return;
+    lastW = innerWidth; lastH = innerHeight; remeasure();
+  });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { needMeasure = true; if (!motion) measure(); });
   if ('ResizeObserver' in window) new ResizeObserver(remeasure).observe(document.body);
   if (!motion) measure();

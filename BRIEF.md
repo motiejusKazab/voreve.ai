@@ -47,3 +47,4 @@ Real-device touch scrolling and frame rate (headless Chrome only).
 - Removed "What a call can lead to": no clear purpose, and it implied capabilities (Route, Handle) that are not verified.
 - The phone returns beside the contact section and reacts to the visitor answering.
 - The phone no longer disappears after the value section: it turns landscape to show the founders, then returns upright to the contact section.
+- The story is paged (one scroll = one step) instead of continuously scrubbed, so text always rests in its readable place below the phone.

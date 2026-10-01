@@ -20,7 +20,7 @@
 .tone-ink    { --bg: var(--ink);    --fg: #EEEAE0; --mute: #A9A497; --line: rgba(238,234,224,.18); --acc: var(--signal-lite); --btn-bg: var(--signal); --btn-fg: #0E0E0C; }
 
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 16px); -webkit-text-size-adjust: 100%; background: var(--ink); }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; background: var(--ink); }
 body { margin: 0; background: var(--ink); color: #EEEAE0; font: 400 1.0625rem/1.6 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
 img, svg, canvas { display: block; max-width: 100%; }
 h1, h2, h3, p, ol, ul, dl, dd, figure { margin: 0; padding: 0; }
@@ -249,8 +249,8 @@ h3 { font: 600 1.125rem/1.3 var(--sans); }
 
 /* ---------- STORY scenes ---------- */
 .story { padding: 0; }
-.scene { position: relative; height: 135svh; }
-.scene--result { height: 150svh; }
+.scene { position: relative; height: 100svh; }
+.scene--result { height: 100svh; }
 .scene__pin { position: sticky; top: 0; height: 100svh; z-index: 2; width: min(100% - 2 * var(--gut), var(--max)); margin-inline: auto; display: flex; align-items: center; padding-top: var(--nav-h); }
 .scene__pin--l { justify-content: flex-start; } .scene__pin--r { justify-content: flex-end; } .scene__pin--c { justify-content: center; }
 .scene--result .scene__pin { z-index: auto; }
@@ -425,8 +425,8 @@ html:not(.motion) .hero__copy { width: auto; }
   .hero__in { justify-content: flex-start; padding-top: calc(var(--nav-h) + 28px); }
   .hero__copy { width: 100%; }
   .hero__title { font-size: clamp(3rem, 14.4vw, 4.6rem); }
-  .scene { height: 125svh; }
-  .scene--result { height: 135svh; }
+  .scene { height: 100svh; }
+  .scene--result { height: 100svh; }
   .scene__pin { align-items: flex-end; padding-top: 0; padding-bottom: 92px; }
   .copy { width: 100%; }
   .copy .h2 { margin-top: 14px; font-size: clamp(2.3rem, 10.6vw, 3.4rem); }
@@ -509,7 +509,7 @@ html[lang="lt"] .rail__steps { gap: 16px; }
   .copy__p { font-size: .875rem; line-height: 1.42; margin-top: 10px; }
   .copy__n, .scene:not(#act) .copy__n { display: none; }
   .scene:target .copy__n { display: block; }
-  .scene__pin { padding-bottom: 74px; }
+  .scene__pin { padding-bottom: 86px; }
   .hero__title { font-size: clamp(2.7rem, 12.6vw, 3.6rem); }
   .lede { font-size: 1rem; margin-top: 14px; }
   .cta-row { margin-top: 16px; }
@@ -575,3 +575,13 @@ html:not(.motion) .about__phone { display: grid; place-items: center; aspect-rat
 .lite .u-rings b, .lite .answer__rings i, .lite .pulse::after, .lite .u-slots .need i::after, .lite .u-spin { animation: none !important; }
 .lite .demo__rings, .lite .day__calls { display: none; }
 .lite .u-wave canvas { image-rendering: auto; }
+
+/* ---------- one scroll = one step through the story (native scroll snapping) ---------- */
+.motion { scroll-snap-type: y mandatory; }
+.motion .hero { scroll-snap-align: start; }
+.motion .scene::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; pointer-events: none; scroll-snap-align: center; scroll-snap-stop: always; } /* a 1px marker at each scene's centre: the scene is as tall as the screen, so it needs an exact target */
+/* everything after the story (value, founders, contact, footer) is ONE tall snap area: every position inside it is valid, so it scrolls freely and jumps land where they should */
+.motion main::after { content: ""; position: absolute; left: 0; right: 0; top: var(--tail-top, 0px); bottom: calc(var(--foot-h, 0px) * -1); pointer-events: none; scroll-snap-align: start; }
+
+/* anchor links clear the fixed nav through the targets themselves (a page-level scroll-padding would shift every snap position) */
+.about, .demo, #contact, .scene { scroll-margin-top: calc(var(--nav-h) + 16px); }

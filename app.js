@@ -87,8 +87,8 @@
   const timeline = (x) => {
     const p1 = smooth(clamp((x - 0.6) / 0.4));
     const p2 = smooth(clamp((x - 1.3) / 0.45));
-    const ty = clamp((x - 1.6) / 0.55);
-    const p3 = smooth(clamp((x - 2.55) / 0.5));
+    const ty = clamp((x - 1.55) / 0.38);
+    const p3 = smooth(clamp((x - 2.5) / 0.45));
     const p4 = clamp((x - 3.3) / 0.7);
     const p5 = smooth(clamp((x - 4.55) / 0.4));
     return { p1, p2, ty, p3, p4, p5, hs: p1 + p2 + p3 + clamp(p4 * 5) + p5, secs: 138 * clamp((x - 0.8) / 4.1) };
@@ -184,7 +184,8 @@
     const sy = scrollY; G.vh = innerHeight; G.vw = innerWidth;
     for (const k in secEls) { const r = secEls[k].getBoundingClientRect(); G.sec[k] = { top: r.top + sy, bottom: r.bottom + sy }; }
     const A = [0];
-    scenes.forEach((s) => { const r = s.getBoundingClientRect(); A.push(r.top + sy + (r.height - G.vh) / 2); });
+    const padTop = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+    scenes.forEach((s) => { const r = s.getBoundingClientRect(); A.push(r.top + sy + (r.height - G.vh) / 2 - padTop / 2); }); // snap rests at centre - padding/2
     A.push(G.sec.value.top + G.vh * 0.2);                       // 6 value: phone rests on the left
     const ap = aboutPhoneEl.getBoundingClientRect(), apMid = ap.top + sy + ap.height / 2;
     const A8 = Math.max(A[6] + 2, apMid - G.vh / 2);              // 8 founders: phone landscape, centred on its slot
@@ -192,6 +193,10 @@
     A.push(A8);
     A.push(Math.max(A8 + G.vh * 0.6, G.sec.demo.top - G.vh * 0.25)); // 9 contact: upright again, beside the CTA
     G.A = A;
+    const mainEl = $('#main'), foot = $('.foot');
+    mainEl.style.setProperty('--tail-top', (G.sec.value.top - (mainEl.getBoundingClientRect().top + sy)).toFixed(0) + 'px');
+    mainEl.style.setProperty('--foot-h', foot.offsetHeight + 'px');
+    G.S = [0, A[1], A[2], A[3], A[4], A[5], Math.max(A[5] + 1, G.sec.value.top - padTop)]; // where the page rests: one per step
     G.ctaBottom = heroCta.getBoundingClientRect().bottom + sy;
     const lr = $('#lead').getBoundingClientRect(); G.leadTop = lr.top + sy; G.leadH = lr.height;
     G.vrowC = vrows.map((r) => { const b = r.getBoundingClientRect(); return b.top + sy + b.height / 2; });
@@ -329,7 +334,9 @@
     const sy = scrollY, vh = G.vh, vw = G.vw;
     if (sy !== lastScrollSeen) { lastScrollSeen = sy; scrollN++; scrollEma += (Math.min(dt, 100) - scrollEma) * 0.08; if (!lite && scrollN > 45 && scrollEma > 26) enterLite(); }
     if (ss < 0) ss = sy;
-    ss += (sy - ss) * (1 - Math.exp(-dt / (coarse ? 55 : 105))); if (Math.abs(sy - ss) < 0.3) ss = sy;
+    const snapZone = motion && sy < G.sec.value.top + vh * 0.5;
+    // in the story each snap is quick, so the phone's own animation follows with a longer, softer ease and finishes after the scroll lands
+    ss += (sy - ss) * (1 - Math.exp(-dt / (snapZone ? 330 : coarse ? 55 : 105))); if (Math.abs(sy - ss) < 0.3) ss = sy;
     const x = posX(ss), m = isMobile();
 
     /* --- the phone --- */
@@ -495,6 +502,52 @@
   const jumpTo = (k, instant) => { if (!G.A.length) return; scrollTo({ top: G.A[k], behavior: instant || !motion ? 'auto' : 'smooth' }); };
   $$('[data-jump]').forEach((a) => a.addEventListener('click', (e) => { if (!motion) return; e.preventDefault(); jumpTo(+a.dataset.jump); if ($('#mnav').contains(a)) setMenu(false); }));
   if (motion && location.hash) { const mk = { '#call': 1, '#listen': 2, '#understand': 3, '#act': 4, '#result': 5 }[location.hash]; if (mk) setTimeout(() => { measure(); jumpTo(mk, true); }, 60); }
+
+  /* ================= paging (mouse wheel, trackpad, keyboard): one deliberate scroll = one step through the story =================
+     Touch uses native scroll snapping. A single wheel click or arrow press is smaller than half a step, so snapping alone would bounce back.
+     A "new gesture" is recognised without needing silence: after a pause, a change of direction, or when the deltas ramp up again
+     (trackpad momentum only ever decays), so a quick second flick is never swallowed as the tail of the first. */
+  if (motion) {
+    let lockUntil = 0, lastEv = 0, lastAbs = 0, lastDir = 0, rises = 0, pendingIdx = -1, pendingUntil = 0;
+    const current = (sy) => {                                   // which step are we on (or heading to)?
+      const S = G.S, now = performance.now();
+      if (pendingIdx >= 0 && now < pendingUntil && Math.abs(sy - S[pendingIdx]) > 6) return pendingIdx;
+      pendingIdx = -1; let idx = 0; for (let k = 1; k < S.length; k++) if (Math.abs(sy - S[k]) < Math.abs(sy - S[idx])) idx = k; return idx;
+    };
+    const canTake = (dir, sy) => {                              // is this scroll ours (the story), or free scrolling?
+      const S = G.S; if (!S || !S.length) return false;
+      const last = S.length - 1;
+      if (sy > S[last] + 40) return false;                      // past the story
+      if (dir > 0 && current(sy) === last && sy >= S[last] - 8) return false; // leaving the story downward: scroll naturally
+      return true;
+    };
+    const go = (dir, sy) => {
+      const S = G.S, now = performance.now(), idx = current(sy), next = clamp(idx + dir, 0, S.length - 1);
+      lockUntil = now + 500;
+      if (next !== idx) { pendingIdx = next; pendingUntil = now + 1300; scrollTo({ top: S[next], behavior: 'smooth' }); }
+    };
+    addEventListener('wheel', (e) => {
+      if (e.ctrlKey || (e.deltaX && Math.abs(e.deltaX) > Math.abs(e.deltaY))) return;
+      const dir = Math.sign(e.deltaY); if (!dir) return;
+      const now = performance.now(), abs = Math.abs(e.deltaY), gap = now - lastEv, prevAbs = lastAbs, prevDir = lastDir;
+      rises = abs > prevAbs * 1.2 + 0.5 ? rises + 1 : 0;           // momentum only decays: two rises in a row = fingers are moving again
+      lastEv = now; lastAbs = abs; lastDir = dir;
+      if (!canTake(dir, scrollY)) return;
+      e.preventDefault();
+      const fresh = gap > 90 || dir !== prevDir || (rises >= 2 && abs >= 3);
+      if (fresh && now >= lockUntil) go(dir, scrollY);
+    }, { passive: false });
+    addEventListener('keydown', (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+      if (e.target.closest && e.target.closest('input, textarea, select, button, a, [role="button"], [contenteditable]')) return; // keep Space/arrows for controls
+      const k = e.key; let dir = 0;
+      if (k === 'ArrowDown' || k === 'PageDown' || (k === ' ' && !e.shiftKey)) dir = 1;
+      else if (k === 'ArrowUp' || k === 'PageUp' || (k === ' ' && e.shiftKey)) dir = -1;
+      else return;
+      if (!canTake(dir, scrollY)) return;
+      e.preventDefault(); if (performance.now() >= lockUntil) go(dir, scrollY);
+    });
+  }
 
   /* ================= menu ================= */
   const toggle = $('#navToggle'), mnav = $('#mnav');
